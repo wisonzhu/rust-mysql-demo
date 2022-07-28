@@ -21,6 +21,7 @@ fn main() {
     // 打印
     println!("Displaying {:?} posts", results.len());
     for post in results {
-        println!("{:?}", post.body);
+        println!("{:?}", post);
+        println!("{:?}", post.title);
     }
 }
