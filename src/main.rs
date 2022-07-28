@@ -6,9 +6,9 @@ use self::diesel_demo::*;
 use self::diesel::prelude::*;
 use self::models::{NewPost, Post};
 
-use serde:: Deserialize;
+use serde::{Serialize,Deserialize};
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Serialize)]
 struct UserPost {
     title: String,
      body: String
@@ -51,7 +51,7 @@ async fn data(jsondata: web::Json<UserPost>) -> impl Responder {
         .execute(&conn)
         .expect("Error saving new post");
 
-    HttpResponse::Ok().body("test post data")
+    HttpResponse::Ok().json(jsondata)
 }
 
 async fn manual_hello() -> impl Responder {
