@@ -9,7 +9,7 @@ pub struct Post {
     pub published: bool,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable,Deserialize)]
 #[table_name = "posts"]
 pub struct NewPost<'a> {
     pub title: &'a str,

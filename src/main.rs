@@ -3,17 +3,25 @@ extern crate diesel_demo;
 extern crate diesel;
 
 use self::diesel_demo::*;
-use self::models::*;
 use self::diesel::prelude::*;
+use self::models::{NewPost, Post};
+
+use serde:: Deserialize;
+
+#[derive(Deserialize)]
+struct UserPost {
+    title: String,
+     body: String
+}
 
 #[get("/")]
 async fn hello() -> impl Responder {
 
     use diesel_demo::schema::posts::dsl::*;
-    let connection = establish_connection();
+    let conn = establish_connection();
     let results = posts.filter(published.eq(true))
     .limit(5)
-    .load::<Post>(&connection)
+    .load::<Post>(&conn)
     .expect("Error loading posts");
 
     // println!("Displaying {:?} posts", results.len());
@@ -29,6 +37,23 @@ async fn echo(req_body: String) -> impl Responder {
     HttpResponse::Ok().body(req_body)
 }
 
+
+
+#[post("/data")]
+async fn data(jsondata: web::Json<UserPost>) -> impl Responder {
+    let conn = establish_connection();
+    use schema::posts::dsl::posts;
+    let str1 = jsondata.title.as_str();
+    let str2 = jsondata.body.as_str();
+    let new_post = NewPost{title: str1 ,body: str2};
+    diesel::insert_into(posts)
+        .values(&new_post)
+        .execute(&conn)
+        .expect("Error saving new post");
+
+    HttpResponse::Ok().body("test post data")
+}
+
 async fn manual_hello() -> impl Responder {
     HttpResponse::Ok().body("Hey there!")
 }
@@ -39,6 +64,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .service(hello)
             .service(echo)
+            .service(data)
             .route("/hey", web::get().to(manual_hello))
     })
     .bind("127.0.0.1:8080")?
