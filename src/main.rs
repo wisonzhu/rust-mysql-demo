@@ -67,7 +67,7 @@ async fn main() -> std::io::Result<()> {
             .service(data)
             .route("/hey", web::get().to(manual_hello))
     })
-    .bind("127.0.0.1:9900")?
+    .bind("0.0.0.0:8088")?
     .run()
     .await
 }
