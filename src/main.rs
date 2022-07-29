@@ -2,11 +2,17 @@ use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 extern crate diesel_demo;
 extern crate diesel;
 
+
 use self::diesel_demo::*;
 use self::diesel::prelude::*;
 use self::models::{NewPost, Post};
 
 use serde::{Serialize,Deserialize};
+
+use crate::config::database::DbPool;
+pub mod config;
+pub mod route;
+pub mod service;
 
 #[derive(Deserialize,Serialize)]
 struct UserPost {
@@ -58,6 +64,19 @@ async fn hello() -> impl Responder {
         HttpResponse::Ok().json(results)
     }
 
+
+#[get("/test")]
+async fn testpool(pool: web::Data<DbPool>) -> impl Responder {
+    info!("this is test");
+    use diesel_demo::schema::posts::dsl::*;
+    let results = posts.filter(published.eq(true))
+    .limit(5)
+    .load::<Post>(&pool.get().unwrap())
+    .expect("Error loading posts");
+    HttpResponse::Ok().json(results)
+    
+}    
+
 #[post("/echo")]
 async fn echo(req_body: String) -> impl Responder {
     HttpResponse::Ok().body(req_body)
@@ -66,7 +85,7 @@ async fn echo(req_body: String) -> impl Responder {
 
 
 #[post("/data")]
-async fn data(jsondata: web::Json<UserPost>) -> impl Responder {
+async fn data1(jsondata: web::Json<UserPost>) -> impl Responder {
     let conn = establish_connection();
     use schema::posts::dsl::posts;
     let str1 = jsondata.title.as_str();
@@ -88,11 +107,16 @@ async fn manual_hello() -> impl Responder {
 async fn main() -> std::io::Result<()> {
     init_logger();
     info!("hello world");
-    HttpServer::new(|| {
+    // env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+    let pool = config::database::establish_connection();
+    HttpServer::new(move || {
         App::new()
+            .app_data(web::Data::new(pool.clone()))
             .service(hello)
             .service(echo)
-            .service(data)
+            .service(data1)
+            .service(testpool)
+            .service(route::test_route::testhello)
             .route("/hey", web::get().to(manual_hello))
     })
     .bind("0.0.0.0:8088")?
