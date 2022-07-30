@@ -21,6 +21,7 @@ pub async fn testhello(pool: web::Data<DbPool>) -> impl Responder {
     //     println!("{:?}", post);
     //     println!("{:?}", post.title);
     // }
-    testok(&pool).await;
-    HttpResponse::Ok().body(format!("Hello world! Succesfully connected to Database! Query Results: {}", "testad"))
+    let data = testok(&pool).await.unwrap();
+    HttpResponse::Ok().json(data)
+    // HttpResponse::Ok().body(format!("Hello world! Succesfully connected to Database! Query Results: {}", "testad"))
 }
