@@ -1,5 +1,7 @@
 use actix_web::{web};
 use diesel::RunQueryDsl;
+use diesel::update;
+use diesel_demo::schema::posts::published;
 use crate::config::database::DbPool;
 use diesel::result::Error;
 extern crate diesel_demo;
@@ -17,8 +19,17 @@ pub async fn testok(pool: &web::Data<DbPool>)->Result<Vec<Post>,Error>{
     .load::<Sequence>(&conn).expect("get_id_error").first().unwrap().id;
     println!("this is ok {:?}",generated_id);
     let results = posts.filter(published.eq(true))
-    .limit(5)
+    .limit(10)
     .load::<Post>(&conn)
     .expect("Error loading posts");
     Ok(results)
+}
+
+pub async fn updatedemo(pool: &web::Data<DbPool>){
+    use diesel_demo::schema::posts::dsl::*;
+    let conn = pool.get().unwrap();
+    let urow = diesel::update(posts.find(16))
+    .set(published.eq(true))
+    .execute(&conn).unwrap();
+    println!("test 123,{:?}",urow);
 }
